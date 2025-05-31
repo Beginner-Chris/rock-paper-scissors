@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rock, Paper, Scissors</title>
+  <link rel="stylesheet" href="main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+<body>
+    
+    <div class="game-container">
+
+        <div class="instructions">
+        <p>Choose Rock, Paper, or Scissors to play against the computer!</p>
+    </div>
+  <h1>Rock, Paper, Scissor</h1>
+  <!-- Arena with hands -->
+  <div class="arena">    <div class="player-box">
+      <i id="player-hand" class="fas fa-hand-rock"></i>
+      <p>You</p>
+    </div>
+    <div class="computer-box">
+      <i id="computer-hand" class="fas fa-hand-rock"></i>
+      <p>Computer</p>
+    </div>
+  </div>
+
+    
+  <!-- Choices buttons -->
+  <div class="choices">
+    <button class="choice" onclick="play('rock')">Rock</button>
+    <button class="choice" onclick="play('paper')">Paper</button>
+    <button class="choice" onclick="play('scissors')">Scissors</button>
+  </div>
+
+  <!-- Scoreboard -->
+  <div class="scoreboard">
+    <div class="score">Player: <span id="player-score">0</span></div>
+    <div class="score">Computer: <span id="computer-score">0</span></div>
+  </div>
+
+  <!-- Results -->
+  <div class="results">
+    <div id="player-choice"></div>
+    <div id="computer-choice"></div>
+    <div id="outcome" class="result"></div>
+  </div>
+    <div class="reset">
+        <button onclick="resetGame()">Reset Game</button>
+</div>
+
+
+  <script src="script.js"></script>
+  <script>
+    const choices = ['rock', 'paper', 'scissors'];
+    let playerHistory = [];
+    let playerScore = 0;
+    let computerScore = 0;   
+    
+ function getResult(playerChoice, computerChoice) {
+  const validChoices = ['rock', 'paper', 'scissors'];
+
+  if (!validChoices.includes(playerChoice) || !validChoices.includes(computerChoice)) {
+    return 'Invalid move!';
+  }
+
+  if (playerChoice === computerChoice) {
+    return 'Tie!';
+  }
+
+  const winConditions = {
+    rock: 'scissors',
+    paper: 'rock',
+    scissors: 'paper'
+  };
+
+  if (winConditions[playerChoice] === computerChoice) {
+    playerScore++;
+    document.getElementById('player-score').textContent = playerScore;
+    return 'You Win!';
+  } else {
+    computerScore++;
+    document.getElementById('computer-score').textContent = computerScore;
+    return 'Computer Wins!';
+  }
+}
+
+     function resetGame() {
+      playerHistory = [];
+      playerScore = 0;
+      computerScore = 0;
+      document.getElementById('player-score').textContent = playerScore;
+      document.getElementById('computer-score').textContent = computerScore;
+      document.getElementById('player-choice').textContent = 'You: ';
+      document.getElementById('computer-choice').textContent = 'Computer: ';
+      document.getElementById('outcome').textContent = '';
+      
+      // Reset hands back to rock
+      document.getElementById('player-hand').className = 'fas fa-hand-rock';
+      document.getElementById('computer-hand').className = 'fas fa-hand-rock';
+    }
+    // Add event listeners to buttons
+    document.querySelectorAll('.choice').forEach(button => {
+      button.addEventListener('click', () => {
+        const playerChoice = button.textContent.toLowerCase();
+        play(playerChoice);
+      });
+    });
+      function play(playerChoice) {
+  playerHistory.push(playerChoice);
+  const playerHand = document.getElementById('player-hand');
+  const computerHand = document.getElementById('computer-hand');
+  if (playerHistory.length > 10) playerHistory.shift();
+
+  const computerChoice = smartChoice();
+
+  // Disable buttons during animation
+  document.querySelectorAll('.choice').forEach(btn => btn.disabled = true);
+
+  // Reset to rock hands for the shake animation while maintaining rotations
+  playerHand.className = 'fas fa-hand-rock';
+  computerHand.className = 'fas fa-hand-rock';
+  
+  // Ensure rotations are maintained
+  playerHand.style.transform = 'rotate(90deg)';
+  computerHand.style.transform = 'rotate(-90deg) scaleX(-1)';
+
+  const countEl = document.createElement('div');
+  countEl.style.position = 'absolute';
+  countEl.style.fontSize = '24px';
+  countEl.style.top = '50%';
+  countEl.style.left = '50%';
+  countEl.style.transform = 'translate(-50%, -50%)';
+  document.querySelector('.arena').appendChild(countEl);
+
+  // Trigger shake animations
+  playerHand.classList.remove('shake');
+  computerHand.classList.remove('shake');
+  void playerHand.offsetWidth;
+  void computerHand.offsetWidth;
+  playerHand.classList.add('shake');
+  computerHand.classList.add('shake');
+
+  // Count animation
+  setTimeout(() => { countEl.textContent = 'Rock!'; }, 400);
+  setTimeout(() => { countEl.textContent = 'Paper!'; }, 1000);
+  setTimeout(() => { countEl.textContent = 'Scissors!'; }, 1600);
+  setTimeout(() => { 
+    countEl.textContent = 'Shoot!';
+    playerHand.className = `fas fa-hand-${playerChoice}`;
+    computerHand.className = `fas fa-hand-${computerChoice}`;
+  }, 2200);
+
+  // Cleanup animations and re-enable buttons
+  setTimeout(() => {
+    countEl.remove();
+    playerHand.classList.remove('shake');
+    computerHand.classList.remove('shake');
+    document.querySelectorAll('.choice').forEach(btn => btn.disabled = false);
+  }, 2400);
+
+  // Corrected: Update results **after** hands are set and animations are done
+  setTimeout(() => {
+    document.getElementById('player-choice').textContent = `You: ${playerChoice}`;
+    document.getElementById('computer-choice').textContent = `Computer: ${computerChoice}`;
+    const outcome = getResult(playerChoice, computerChoice);
+    const outcomeEl = document.getElementById('outcome');
+    outcomeEl.textContent = outcome;
+    outcomeEl.classList.remove('result');
+    void outcomeEl.offsetWidth;
+    outcomeEl.classList.add('result');
+  }, 2600); // <-- bumped to 2600ms
+}
+
+
+
+    function smartChoice() {
+      if (playerHistory.length < 3) {
+        return choices[Math.floor(Math.random() * 3)];
+      }
+
+      const counts = { rock: 0, paper: 0, scissors: 0 };
+      for (const move of playerHistory) {
+        counts[move]++;
+      }
+
+      const mostCommon = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+
+      if (mostCommon === 'rock') return 'paper';
+      if (mostCommon === 'paper') return 'scissors';
+      return 'rock';
+    }
+  </script>
+</body>
+</html>
